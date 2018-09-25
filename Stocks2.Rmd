@@ -1,0 +1,49 @@
+---
+title: "Stocks2"
+author: "Jon-Trygve"
+date: "17 september 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Equinor vs Norsk Hydro closing values
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+warnings = FALSE
+require(tidyverse)
+```
+
+```{r, include= FALSE }
+eqnr <- read_csv("https://www.netfonds.no/quotes/paperhistory.php?paper=EQNR.OSE&csv_format=csv", 
+    col_types = cols(quote_date = col_date(format = "%Y%m%d")))
+
+nhy <- read_csv("https://www.netfonds.no/quotes/paperhistory.php?paper=NHY.OSE&csv_format=csv", 
+    col_types = cols(quote_date = col_date(format = "%Y%m%d")))
+
+## arrange data, slik at man får stigende dato
+
+
+```
+
+```{r}
+merged <- merge(eqnr, nhy, by = "quote_date")
+
+ggplot(merged, aes(x = quote_date, y=close.x)) + geom_line(colour = "#E7B800") +  xlab("date") + ylab("closing value")
+ggplot(merged, aes(x = quote_date, y=close.y)) + geom_line(colour = "#00AFBB") +  xlab("date") + ylab("closing value")
+
+ggplot() +
+  geom_line(data=merged, aes(x = quote_date, y=close.x),colour = "#E7B800")  + 
+  geom_line(data=merged, aes(x = quote_date, y=close.y),colour = "#00AFBB") + 
+  xlab("date") + ylab("closing value")
+
+
+```
+
+## With a starting date of january 4th 2010
+
+```{r}
+
+```
+
