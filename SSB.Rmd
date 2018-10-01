@@ -1,0 +1,161 @@
+---
+title: "SSB"
+author: "Jon-Trygve"
+date: "25 september 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+require(PxWebApiData)
+require(mosaic)
+library(tidyverse)
+library(gapminder)
+```
+
+#Datalek SSB Henter ned data fra ssb.no
+
+```{r}
+rm(list = ls())
+options(encoding="UTF-8")
+library(httr)
+```
+
+
+# henter rjstat bibliotek for behandling av JSON-stat
+
+```{r}
+library(rjstat)
+```
+
+
+
+# Adresse til et ferdig json-stat datasett for hotell kapasitetsutnytting fylket 
+
+```{r}
+url1 <- "http://data.ssb.no/api/v0/dataset/95274.json?lang=no"
+d.tmp1<-GET(url1)
+```
+
+
+# Henter ut innholdet fra d.tmp som tekst deretter bearbeides av fromJSONstat
+```{r}
+sbtabell1 <- fromJSONstat(content(d.tmp1, "text"))
+```
+
+
+
+# Henter ut kun datasettet fra sbtabell
+```{r}
+ds1 <- sbtabell1[[1]]
+```
+
+
+# Gjør om 0 verdier til NA.
+```{r}
+ds1[ds1==0] <- NA
+```
+
+
+
+# Fjerner observasjoner med NA. 
+```{r}
+ds1.0 <- ds1[complete.cases(ds1),]
+options(encoding="UTF-8")
+library(httr)
+```
+
+
+# henter rjstat bibliotek for behandling av JSON-stat
+```{r}
+library(rjstat)
+```
+
+# Adresse til et ferdig json-stat datasett for hotell kapasitetsutnytting hele landet  
+```{r}
+url2 <- "http://data.ssb.no/api/v0/dataset/95276.json?lang=no"
+d.tmp2<-GET(url2)
+```
+
+
+# Henter ut innholdet fra d.tmp som tekst deretter bearbeides av fromJSONstat
+```{r}
+sbtabell2 <- fromJSONstat(content(d.tmp2, "text"))
+```
+
+
+# Henter ut kun datasettet fra sbtabell
+```{r}
+ds2 <- sbtabell2[[1]]
+```
+
+
+# Viser datasettet
+```{r}
+head(ds2)
+```
+
+
+
+# Gjør om 0 verdier til NA. 
+```{r}
+ds2[ds2==0] <- NA
+```
+
+
+# Fjerner observasjoner med NA. 
+```{r}
+ds2.0 <- ds2[complete.cases(ds2),]
+```
+
+
+# Setter de to datafilene sammen med hensyn på dato 
+```{r}
+mergedds <- merge(ds1.0, ds2.0, by = "måned")
+```
+
+
+
+Gjennomsnitt fylkesnivå
+```{r}
+favstats(~value.x, data = mergedds)
+```
+
+
+Gjennomsnitt hele landet
+```{r}
+favstats(~value.y, data = mergedds)
+mean
+```
+
+#mean = 256,5729
+Differanse i gjennomsnitt
+```{r}
+mean(~value.y, data = mergedds) - mean(~value.x, data = mergedds) 
+```
+
+
+Gjennomsnitt per fylke
+```{r}
+avg_fylke <- ds1.0%>%
+  group_by(region) %>%
+  summarise(avg_value = mean(value))
+
+avg_fylke
+avg_fylke < 256.5729
+```
+
+
+Oslo, Svalbard og Trøndelag ligger over landsgjennomsnittet
+```{r}
+p <- ggplot() + 
+  geom_line(data = mergedds, aes(x = måned, y = value.x) , color="red") +
+  geom_line(data = mergedds, aes(x = måned, y = value.y) , color="#000000") + xlab("dato") + ylab("value i prosent") 
+
+p
+```
+
+
